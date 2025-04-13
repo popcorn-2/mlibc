@@ -13,6 +13,8 @@
 #include <bits/ansi/timespec.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <time.h>
+#include <bits/sigset_t.h>
 
 struct rusage;
 
