@@ -272,6 +272,11 @@ elif host_machine.system() == 'nyaux'
 	rtld_include_dirs += include_directories('sysdeps/nyaux/include')
 	libc_include_dirs += include_directories('sysdeps/nyaux/include')
 	subdir('sysdeps/nyaux')
+elif host_machine.system() == 'popcorn'
+	disable_linux_option = true
+	rtld_include_dirs += include_directories('sysdeps/popcorn/include')
+	libc_include_dirs += include_directories('sysdeps/popcorn/include')
+	subdir('sysdeps/popcorn')
 else
 	error('No sysdeps defined for OS: ' + host_machine.system())
 endif
