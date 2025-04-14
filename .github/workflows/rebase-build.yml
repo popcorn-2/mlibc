@@ -1,4 +1,4 @@
-name: Rebase & Build PopcornLLVM
+name: Rebase & Build Popcorn mlibc
 
 on:
   schedule:
@@ -20,8 +20,8 @@ jobs:
     - name: Rebase onto upstream
       run: |
         git remote add upstream https://github.com/managarm/mlibc.git
-        git fetch upstream main
-        git rebase upstream/main
+        git fetch upstream master
+        git rebase upstream/master
         git push --force-with-lease
 
     - name: Unpack toolchain
