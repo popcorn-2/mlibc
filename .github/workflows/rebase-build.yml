@@ -28,7 +28,7 @@ jobs:
       run: |
         curl https://github.com/popcorn-2/llvm-project/releases/latest/download/toolchain-$(uname -s).tar.gz > toolchain-$(uname -s).tar.gz
         mkdir toolchain
-        tar -C ../toolchain/ -xzf $(pwd)/toolchain-$(uname -s).tar.gz
+        tar -C toolchain/ -xzf $(pwd)/toolchain-$(uname -s).tar.gz
     
     - name: Build mlibc
       run: |
