@@ -55,7 +55,7 @@ jobs:
     - name: Define version tag
       id: version
       run: |
-        UPSTREAM_SHA=$(git rev-parse --short upstream/main)
+        UPSTREAM_SHA=$(git rev-parse --short upstream/master)
         PATCH_SHA=$(git rev-parse --short HEAD)
         TAG="popcorn-clang-${UPSTREAM_SHA}-${PATCH_SHA}"
         echo "TAG=$TAG" >> $GITHUB_OUTPUT
