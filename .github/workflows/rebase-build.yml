@@ -48,6 +48,7 @@ jobs:
     - name: Package
       run: |
         mkdir ${{github.workspace}}/pkg
+        cd build
         DESTDIR="${{github.workspace}}/pkg" ninja install
         tar -C ${{github.workspace}}/pkg -czf mlibc.tar.gz .
     
