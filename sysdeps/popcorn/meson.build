@@ -1,8 +1,8 @@
 sysdep_supported_options = {
-	'posix': false,
+	'posix': true,
 	'linux': false,
-	'glibc': false,
-	'bsd': false,
+	'glibc': true,
+	'bsd': true,
 }
 
 rtld_sources += files(
@@ -35,6 +35,25 @@ if not no_headers
 		'include/abi-bits/vm-flags.h',
 		'include/abi-bits/mode_t.h',
 		'include/abi-bits/gid_t.h',
+		'include/abi-bits/access.h',
+		'include/abi-bits/suseconds_t.h',
+		'include/abi-bits/socket.h',
+		'include/abi-bits/socklen_t.h',
+		'include/abi-bits/poll.h',
+		'include/abi-bits/in.h',
+		'include/abi-bits/resource.h',
+		'include/abi-bits/rlim_t.h',
+		'include/abi-bits/utsname.h',
+		'include/abi-bits/ipc.h',
+		'include/abi-bits/statvfs.h',
+		'include/abi-bits/fsblkcnt_t.h',
+		'include/abi-bits/fsfilcnt_t.h',
+		'include/abi-bits/time.h',
+		'include/abi-bits/shm.h',
+		'include/abi-bits/termios.h',
+		'include/abi-bits/ioctls.h',
+		'include/abi-bits/msg.h',
+		'include/abi-bits/mqueue.h',
 
 		subdir: 'abi-bits',
 		follow_symlinks: true
@@ -77,6 +96,15 @@ if not headers_only
 		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
 		input: 'crt-x86_64/crtn.S',
 		output: 'crtn.o',
+		install: true,
+		install_dir: get_option('libdir')
+	)
+
+	custom_target('crtend',
+		build_by_default: true,
+		command: c_compiler.cmd_array() + ['-c', '-o', '@OUTPUT@', '@INPUT@'],
+		input: 'crt-x86_64/crtend.S',
+		output: 'crtend.o',
 		install: true,
 		install_dir: get_option('libdir')
 	)
