@@ -26,7 +26,7 @@ jobs:
 
     - name: Unpack toolchain
       run: |
-        curl https://github.com/popcorn-2/llvm-project/releases/latest/download/toolchain-$(uname -s).tar.gz > toolchain-$(uname -s).tar.gz
+        curl -L -O https://github.com/popcorn-2/llvm-project/releases/latest/download/toolchain-$(uname -s).tar.gz > toolchain-$(uname -s).tar.gz
         mkdir toolchain
         tar -C toolchain/ -xzf $(pwd)/toolchain-$(uname -s).tar.gz
     
@@ -48,13 +48,15 @@ jobs:
     - name: Package
       run: |
         mkdir ${{github.workspace}}/pkg
+        cd build
         DESTDIR="${{github.workspace}}/pkg" ninja install
+        cd ..
         tar -C ${{github.workspace}}/pkg -czf mlibc.tar.gz .
     
     - name: Define version tag
       id: version
       run: |
-        UPSTREAM_SHA=$(git rev-parse --short upstream/main)
+        UPSTREAM_SHA=$(git rev-parse --short upstream/master)
         PATCH_SHA=$(git rev-parse --short HEAD)
         TAG="popcorn-clang-${UPSTREAM_SHA}-${PATCH_SHA}"
         echo "TAG=$TAG" >> $GITHUB_OUTPUT
