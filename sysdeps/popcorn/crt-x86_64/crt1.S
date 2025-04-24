@@ -2,7 +2,9 @@
 
 .global _start
 _start:
-    mov $main, %rdi
+    mov $main, %rsi
+    mov %rsp, %rdi
+	mov $0, %rbp
     call __mlibc_entry
 
 .size _start, . - _start
