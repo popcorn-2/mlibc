@@ -12,7 +12,11 @@ namespace mlibc {
 		} else if (mlibc::sys_futex_tid) {
 			return mlibc::sys_futex_tid();
 		} else {
-			return 1;
+			#ifdef __POPCORN__
+				return 3; // popcorn default tid is 3, because it maps to the thread handle
+			#else
+				return 1;
+			#endif
 		}
 	}
 }
