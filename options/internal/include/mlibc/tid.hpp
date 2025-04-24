@@ -8,7 +8,11 @@ namespace mlibc {
 		if (mlibc::IsImplemented<FutexTid>) {
 			return mlibc::sysdep_or_panic<FutexTid>();
 		} else {
-			return 1;
+			#ifdef __POPCORN__
+				return 3; // popcorn default tid is 3, because it maps to the thread handle
+			#else
+				return 1;
+			#endif
 		}
 	}
 
