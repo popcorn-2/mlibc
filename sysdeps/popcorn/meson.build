@@ -10,6 +10,8 @@ rtld_sources += files(
 
 libc_sources += files(
 	'generic/entry.cpp',
+	'generic/generic.cpp',
+	'generic/io.cpp'
 )
 
 if not no_headers
@@ -54,6 +56,8 @@ if not no_headers
 		'include/abi-bits/ioctls.h',
 		'include/abi-bits/msg.h',
 		'include/abi-bits/mqueue.h',
+
+		'include/mlibc/syscall.h',
 
 		subdir: 'abi-bits',
 		follow_symlinks: true
