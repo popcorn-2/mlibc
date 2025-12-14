@@ -350,6 +350,35 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
 
+	earlyTcb.tid = -1;
+
+	// Scan for TID in handle map
+	auto aux = entryStack;
+	aux += *aux + 1; // First, we skip argc and all args.
+	__ensure(!*aux);
+	aux++; // skip argv terminator
+	while(*aux) { aux += 1; } // skip all environ
+	__ensure(!*aux);
+	aux++; // skip environ terminator
+	while(*aux) { aux += 2; } // skip all auxv
+	aux += 2; // skip auxv terminator
+
+	while (*aux) {
+		auto value = aux + 1;
+		if (!(*aux)) break;
+
+		auto name = reinterpret_cast<char *>(*aux);
+		frg::string_view view{name};
+
+		if (view == "thread.main") {
+			earlyTcb.tid = *value;
+			break;
+		}
+
+		aux += 2;
+	}
+	__ensure(earlyTcb.tid != -1);
+
 	// Set up an early TCB such that we can cache our own TID.
 	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
 	earlyTcb.selfPointer = &earlyTcb;
@@ -445,7 +474,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 #endif // !defined(MLIBC_STATIC_BUILD)
 
 	// Find the auxiliary vector by skipping args and environment.
-	auto aux = entryStack;
+	aux = entryStack;
 	aux += *aux + 1; // First, we skip argc and all args.
 	__ensure(!*aux);
 	aux++;
@@ -492,8 +521,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Parse the actual vector.
 	while(true) {
 		auto value = aux + 1;
-		if(!(*aux))
-			break;
+		if(!(*aux)) break;
 
 		if(rtldConfig.debug) {
 			switch(*aux) {

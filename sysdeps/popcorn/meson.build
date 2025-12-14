@@ -1,17 +1,26 @@
 sysdep_supported_options = {
 	'posix': true,
 	'linux': false,
-	'glibc': true,
-	'bsd': true,
+	'glibc': false,
+	'bsd': false,
 }
 
 rtld_sources += files(
+	'generic/io.cpp',
+	'generic/generic.cpp',
+	'generic/handle.cpp'
+)
+
+internal_sources += files(
+	'generic/entry.cpp',
+	'generic/thread_rt.cpp',
+	'generic/thread_entry.S'
 )
 
 libc_sources += files(
-	'generic/entry.cpp',
+	'generic/io.cpp',
 	'generic/generic.cpp',
-	'generic/io.cpp'
+	'generic/handle.cpp'
 )
 
 if not no_headers
@@ -57,22 +66,14 @@ if not no_headers
 		'include/abi-bits/msg.h',
 		'include/abi-bits/mqueue.h',
 
-		'include/mlibc/syscall.h',
-
 		subdir: 'abi-bits',
 		follow_symlinks: true
 	)
 	install_headers(
-		subdir: 'sys'
-	)
+		subdir: 'sys',
 
-	install_headers(
-		subdir: 'asm'
-	)
-
-	install_headers(
-		#'include/linux/fb.h',
-		subdir: 'linux'
+		'include/sys/handle.h',
+		'include/sys/syscall.h',
 	)
 endif
 

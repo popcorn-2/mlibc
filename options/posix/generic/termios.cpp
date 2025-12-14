@@ -5,6 +5,10 @@
 #include <errno.h>
 #include <termios.h>
 
+#ifndef __POPCORN__
+#include <sys/ioctl.h>
+#endif
+
 #include <bits/ensure.h>
 #include <mlibc/all-sysdeps.hpp>
 
@@ -75,12 +79,17 @@ int tcgetattr(int fd, struct termios *attr) {
 }
 
 pid_t tcgetsid(int fd) {
+#ifndef __POPCORN__
 	int sid, scratch;
 	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGSID, &sid, &scratch); e) {
 		errno = e;
 		return -1;
 	}
 	return sid;
+#else
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+#endif
 }
 
 int tcsendbreak(int fd, int dur) {

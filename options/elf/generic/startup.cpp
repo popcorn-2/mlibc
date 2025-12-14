@@ -26,6 +26,7 @@ namespace {
 		nullptr
 	};
 }
+extern "C" char *handle_map;
 
 namespace mlibc {
 
@@ -45,6 +46,7 @@ void parse_exec_stack(void *opaque_sp, exec_stack_data *data) {
 	__ensure(!*sp); // Skip the terminating null element.
 	sp++;
 	data->envp = reinterpret_cast<char **>(sp);
+	// todo: load handle pointer into handle_map
 }
 
 // TODO: This does not have to be here; we could also move it to options/internal.

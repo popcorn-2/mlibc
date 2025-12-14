@@ -2,6 +2,7 @@
 
 #include <mlibc/all-sysdeps.hpp>
 #include <mlibc/thread.hpp>
+#include <bits/ensure.h>
 
 namespace mlibc {
 	inline unsigned int refetch_tid() {
@@ -9,7 +10,7 @@ namespace mlibc {
 			return mlibc::sysdep_or_panic<FutexTid>();
 		} else {
 			#ifdef __POPCORN__
-				return 3; // popcorn default tid is 3, because it maps to the thread handle
+				__ensure(!"tid should always be cached in TCB on popcorn");
 			#else
 				return 1;
 			#endif

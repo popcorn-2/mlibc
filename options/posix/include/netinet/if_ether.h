@@ -91,7 +91,6 @@
 #define ETH_P_IEEE802154 0x00F6
 #define ETH_P_CAIF 0x00F7
 
-#include <net/ethernet.h>
 #include <net/if_arp.h>
 
 struct ether_arp {

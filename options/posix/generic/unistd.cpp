@@ -516,6 +516,15 @@ int getlogin_r(char *name, size_t name_len) {
 	return 0;
 }
 
+// optarg and optind are provided to us by the GLIBC part of the mlibc.
+
+#if not(__MLIBC_GLIBC_OPTION)
+extern "C" {
+	char *optarg;
+	int optind = 1;
+}
+#endif
+
 int getopt(int argc, char *const argv[], const char *optstring) {
 	return mlibc::getopt_common(argc, argv, optstring, nullptr, nullptr, mlibc::GetoptMode::Short);
 }
@@ -1009,6 +1018,7 @@ long sysconf(int number) {
 }
 
 pid_t tcgetpgrp(int fd) {
+#ifndef __POPCORN__
 	int pgrp, scratch;
 	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCGPGRP, &pgrp, &scratch); e) {
 		errno = e;
@@ -1016,9 +1026,14 @@ pid_t tcgetpgrp(int fd) {
 	}
 
 	return pgrp;
+#else
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+#endif
 }
 
 int tcsetpgrp(int fd, pid_t pgrp) {
+#ifndef __POPCORN__
 	int scratch;
 	if(int e = mlibc::sysdep_or_enosys<Ioctl>(fd, TIOCSPGRP, &pgrp, &scratch); e) {
 		errno = e;
@@ -1026,6 +1041,10 @@ int tcsetpgrp(int fd, pid_t pgrp) {
 	}
 
 	return 0;
+#else
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+#endif
 }
 
 int truncate(const char *path, off_t length) {
