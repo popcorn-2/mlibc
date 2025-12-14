@@ -3,6 +3,9 @@
 
 namespace [[gnu::visibility("hidden")]] mlibc {
 
+#ifdef __POPCORN__
+int sys_tcb_set(void *pointer, unsigned int tid);
+#endif
 int sys_tcb_set(void *pointer);
 
 [[gnu::weak]] int sys_vm_readahead(void *pointer, size_t size);

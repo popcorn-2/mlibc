@@ -1,13 +1,16 @@
 #include <mlibc/internal-sysdeps.hpp>
 #include <mlibc/ansi-sysdeps.hpp>
-#include <fcntl.h>
-#include <mlibc/syscall.h>
+#include <abi-bits/fcntl.h>
+#include <sys/syscall.h>
 #include <string.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
 
 int mlibc::sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
-	const static __uint128_t protocols[2] = {
+	mlibc::panicLogger() << "mlibc: `sys_open` is a stub" << frg::endlog;
+	mlibc::sys_libc_panic();
+
+	/*const static __uint128_t protocols[2] = {
 		POPCORN_INTERFACE_CORE_IO_READ,
 		POPCORN_INTERFACE_CORE_IO_WRITE
 	};
@@ -37,39 +40,41 @@ int mlibc::sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 	} else {
 		*fd = res;
 		return 0;
-	}
+	}*/
 }
 
 int mlibc::sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-	auto res = __syscall(
-		POPCORN_INTERFACE_CORE_IO_READ,
+	uint64_t ret_low, ret_high;
+	__syscall_3(
+		POPCORN_METHOD_CORE_IO_READ_READ | POPCORN_INTERFACE_CORE_IO_READ,
+		ret_low, ret_high,
 		fd,
-		0,
-		reinterpret_cast<size_t>(buf),
-		count
+		buf,
+		count,
+		error
 	);
-	if (res < 0) {
-		return -res;
-	} else {
-		*bytes_read = res;
-		return 0;
-	}
+	if (bytes_read) *bytes_read = ret_low;
+	return 0;
+
+	error:
+	return ret_low;
 }
 
 int mlibc::sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
-	auto res = __syscall(
-		POPCORN_INTERFACE_CORE_IO_WRITE,
+	uint64_t ret_low, ret_high;
+	__syscall_3(
+		POPCORN_METHOD_CORE_IO_WRITE_WRITE | POPCORN_INTERFACE_CORE_IO_WRITE,
+		ret_low, ret_high,
 		fd,
-		0,
-		reinterpret_cast<size_t>(buf),
-		count
+		buf,
+		count,
+		error
 	);
-	if (res < 0) {
-		return -res;
-	} else {
-		*bytes_written = res;
-		return 0;
-	}
+	if (bytes_written) *bytes_written = ret_low;
+	return 0;
+
+	error:
+	return ret_low;
 }
 
 int mlibc::sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
@@ -78,16 +83,6 @@ int mlibc::sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
 }
 
 int mlibc::sys_close(int fd) {
-	auto res = __syscall(
-		(__uint128_t)1 << 96,
-		fd,
-		0,
-		0,
-		0
-	);
-
-	if (res < 0) {
-		return -res;
-	}
-	return 0;
+	mlibc::panicLogger() << "mlibc: `sys_close` is a stub" << frg::endlog;
+	mlibc::sys_libc_panic();
 }

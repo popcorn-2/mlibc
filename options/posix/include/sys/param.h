@@ -2,7 +2,10 @@
 #ifndef _SYS_PARAM_H
 #define _SYS_PARAM_H
 
-#include <endian.h>
+#if __MLIBC_GLIBC_OPTION
+	#include <endian.h>
+#endif /*__MLIBC_GLIBC_OPTION */
+
 #include <limits.h>
 
 #define NBBY CHAR_BIT

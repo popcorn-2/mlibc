@@ -24,9 +24,9 @@
 #define HIDDEN  __attribute__((__visibility__("hidden")))
 #define EXPORT  __attribute__((__visibility__("default")))
 
-static constexpr bool logEntryExit = false;
-static constexpr bool logStartup = false;
-static constexpr bool logDlCalls = false;
+static constexpr bool logEntryExit = true;
+static constexpr bool logStartup = true;
+static constexpr bool logDlCalls = true;
 
 #ifndef MLIBC_STATIC_BUILD
 extern HIDDEN void *_GLOBAL_OFFSET_TABLE_[];
@@ -40,7 +40,7 @@ namespace mlibc {
 
 mlibc::RtldConfig rtldConfig;
 
-bool ldShowAuxv = false;
+bool ldShowAuxv = true;
 
 uintptr_t *entryStack;
 static constinit Tcb earlyTcb{};
@@ -286,11 +286,39 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 		mlibc::infoLogger() << "Entering ld.so" << frg::endlog;
 	entryStack = entry_stack;
 
+	earlyTcb.tid = -1;
+
+	// Scan for TID in handle map
+	auto aux = entryStack;
+	aux += *aux + 1; // First, we skip argc and all args.
+	__ensure(!*aux);
+	aux++; // skip argv terminator
+	while(*aux) { aux += 1; } // skip all environ
+	__ensure(!*aux);
+	aux++; // skip environ terminator
+	while(*aux) { aux += 2; } // skip all auxv
+	aux += 2; // skip auxv terminator
+
+	while (*aux) {
+		auto value = aux + 1;
+		if (!(*aux)) break;
+
+		auto name = reinterpret_cast<char *>(*aux);
+		frg::string_view view{name};
+
+		if (view == "thread.main") {
+			earlyTcb.tid = *value;
+			break;
+		}
+
+		aux += 2;
+	}
+	__ensure(earlyTcb.tid != -1);
+
 	// Set up an early TCB such that we can cache our own TID.
 	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
 	earlyTcb.selfPointer = &earlyTcb;
-	earlyTcb.tid = mlibc::this_tid();
-	if(mlibc::sys_tcb_set(&earlyTcb))
+	if(mlibc::sys_tcb_set(&earlyTcb, earlyTcb.tid))
 		__ensure(!"sys_tcb_set() failed");
 	mlibc::tcb_available_flag = true;
 
@@ -379,7 +407,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	__ensure(soname_str);
 
 	// Find the auxiliary vector by skipping args and environment.
-	auto aux = entryStack;
+	aux = entryStack;
 	aux += *aux + 1; // First, we skip argc and all args.
 	__ensure(!*aux);
 	aux++;
@@ -413,8 +441,7 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Parse the actual vector.
 	while(true) {
 		auto value = aux + 1;
-		if(!(*aux))
-			break;
+		if(!(*aux)) break;
 
 		if(ldShowAuxv) {
 			switch(*aux) {

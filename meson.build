@@ -30,6 +30,7 @@ rtld_sources = [ ]
 rtld_dso_sources = [ ]
 libc_sources = [ ]
 libc_sublibs = [ ]
+internal_sources = [ ]
 
 libc_deps = [ ]
 rtld_deps = [ ]
@@ -391,7 +392,7 @@ configure_file(input: 'mlibc-config.h.in',
 	install: not no_headers,
 	install_dir: get_option('includedir'))
 
-internal_sources = [
+internal_sources += [
 	'options/internal/generic/allocator.cpp',
 	'options/internal/generic/c-locale-defaults.cpp',
 	'options/internal/generic/charcode.cpp',
@@ -532,7 +533,7 @@ if not headers_only
 
 	libc_all_sources = [
 		libc_sources,
-		internal_sources,
+		#internal_sources,
 		ansi_sources,
 		lsb_sources,
 	]
@@ -547,7 +548,7 @@ if not headers_only
 		]
 		ld_static_lib = static_library(ld_library_name, rtld_sources,
 			name_prefix: '',
-			cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args,
+			cpp_args: mlibc_c_args + ld_cpp_args + static_cpp_args + ['-fno-stack-protector', '-fno-omit-frame-pointer'],
 			link_args: mlibc_link_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
@@ -555,10 +556,17 @@ if not headers_only
 		)
 		libc_static = static_library('c', libc_all_sources,
 			c_args: mlibc_c_args,
-			cpp_args: static_cpp_args + ['-fno-stack-protector', libc_cpp_args],
+			cpp_args: static_cpp_args + ['-fno-stack-protector', '-fno-omit-frame-pointer', libc_cpp_args],
 			link_args: mlibc_link_args,
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
+			link_whole: [libc_sublibs, ld_static_lib],
+			install: true
+		)
+		librt_static = static_library('rt', internal_sources,
+			cpp_args: static_cpp_args + ['-fno-stack-protector', '-fno-omit-frame-pointer', libc_cpp_args],
+			include_directories: libc_include_dirs,
+			dependencies: rtld_deps + rtlib_deps,
 			link_with: [ld_static_lib],
 			link_whole: [libc_sublibs, ld_static_lib],
 			install: true
@@ -567,7 +575,7 @@ if not headers_only
 	if library_type in ['shared', 'both']
 		ld_shared_lib = shared_library(ld_library_name, rtld_sources + rtld_dso_sources,
 			name_prefix: '',
-			cpp_args: mlibc_c_args + ld_cpp_args,
+			cpp_args: mlibc_c_args + ld_cpp_args + ['-fPIC', '-fno-stack-protector', '-fno-omit-frame-pointer'],
 			link_args: mlibc_link_args,
 			include_directories: rtld_include_dirs,
 			dependencies: rtld_deps + rtlib_deps,
@@ -575,27 +583,27 @@ if not headers_only
 		)
 		hide_everything_ld = (meson.current_source_dir()
 				      / 'scripts/hide-everything.ld')
-		libc_shared = shared_library('c', libc_all_sources,
-			c_args: [mlibc_c_args],
-			cpp_args: [libc_cpp_args],
+		libc_shared = shared_library('c', 'dummy-libs/libpthread/src/dummy.cpp',
+			cpp_args: ['-fno-stack-protector', libc_cpp_args, '-fno-omit-frame-pointer'],
+			#include_directories: libc_include_dirs,
+			#dependencies: libc_deps + rtlib_deps,
+			#link_with: [ld_shared_lib, librt_shared],
+			#link_whole: libc_sublibs,
+			link_args: ['-Wl,--version-script,' + hide_everything_ld],
+			link_depends: [hide_everything_ld],
+			install: true
+		)
+		librt_shared = shared_library('rt', libc_all_sources + [internal_sources],
+			cpp_args: ['-fno-stack-protector', libc_cpp_args, '-fno-omit-frame-pointer'],
 			include_directories: libc_include_dirs,
 			dependencies: libc_deps + rtlib_deps,
 			link_with: [ld_shared_lib],
 			link_whole: libc_sublibs,
-			link_args: ['-Wl,--version-script,' + hide_everything_ld, mlibc_link_args],
+			link_args: ['-Wl,--version-script,' + hide_everything_ld, '-lclang_rt.builtins'],
 			link_depends: [hide_everything_ld],
 			install: true
 		)
 	endif
-
-	library('pthread', 'dummy-libs/libpthread/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('rt', 'dummy-libs/librt/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('util', 'dummy-libs/libutil/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('m', 'dummy-libs/libm/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('resolv', 'dummy-libs/libresolv/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('dl', 'dummy-libs/libdl/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('ssp', 'dummy-libs/libssp/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
-	library('ssp_nonshared', 'dummy-libs/libssp_nonshared/src/dummy.cpp', cpp_args: libc_cpp_args, link_args: mlibc_link_args, install: true)
 endif
 
 summary_info = {}

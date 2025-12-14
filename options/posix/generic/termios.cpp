@@ -5,6 +5,10 @@
 #include <errno.h>
 #include <termios.h>
 
+#ifndef __POPCORN__
+#include <sys/ioctl.h>
+#endif
+
 #include <bits/ensure.h>
 #include <mlibc/posix-sysdeps.hpp>
 
@@ -79,6 +83,7 @@ int tcgetattr(int fd, struct termios *attr) {
 }
 
 pid_t tcgetsid(int fd) {
+#ifndef __POPCORN__
 	int sid, scratch;
 	MLIBC_CHECK_OR_ENOSYS(mlibc::sys_ioctl, -1);
 	if(int e = mlibc::sys_ioctl(fd, TIOCGSID, &sid, &scratch); e) {
@@ -86,6 +91,10 @@ pid_t tcgetsid(int fd) {
 		return -1;
 	}
 	return sid;
+#else
+	__ensure(!"Not implemented");
+	__builtin_unreachable();
+#endif
 }
 
 int tcsendbreak(int fd, int dur) {

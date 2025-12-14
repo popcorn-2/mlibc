@@ -2,7 +2,12 @@
 #define _NETINET_ETHER_H
 
 #include <bits/ether_addr.h>
+
+#if 0
 #include <netinet/if_ether.h>
+#else
+#define ETH_ALEN 6
+#endif
 
 #ifdef __cplusplus
 extern "C" {

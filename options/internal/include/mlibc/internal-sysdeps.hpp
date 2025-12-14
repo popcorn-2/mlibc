@@ -20,6 +20,9 @@ namespace [[gnu::visibility("hidden")]] mlibc {
 void sys_libc_log(const char *message);
 [[noreturn]] void sys_libc_panic();
 
+#ifdef __POPCORN__
+int sys_tcb_set(void *pointer, unsigned int tid);
+#endif
 int sys_tcb_set(void *pointer);
 
 [[gnu::weak]] int sys_futex_tid();

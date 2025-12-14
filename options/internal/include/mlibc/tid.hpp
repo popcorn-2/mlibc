@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mlibc/thread.hpp>
+#include <bits/ensure.h>
 #include <mlibc/internal-sysdeps.hpp>
 
 namespace mlibc {
@@ -13,7 +14,7 @@ namespace mlibc {
 			return mlibc::sys_futex_tid();
 		} else {
 			#ifdef __POPCORN__
-				return 3; // popcorn default tid is 3, because it maps to the thread handle
+				__ensure(!"tid should always be cached in TCB on popcorn");
 			#else
 				return 1;
 			#endif
