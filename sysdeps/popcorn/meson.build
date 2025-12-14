@@ -70,10 +70,10 @@ if not no_headers
 		follow_symlinks: true
 	)
 	install_headers(
-		subdir: 'sys',
-
 		'include/sys/handle.h',
 		'include/sys/syscall.h',
+		
+		subdir: 'sys',
 	)
 endif
 
