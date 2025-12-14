@@ -65,6 +65,8 @@ struct stat {
 	blkcnt_t st_blocks;
 };
 
+#define stat64 stat
+
 #ifdef __cplusplus
 }
 #endif
