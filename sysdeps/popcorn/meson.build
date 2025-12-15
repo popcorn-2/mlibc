@@ -65,6 +65,9 @@ if not no_headers
 		'include/abi-bits/ioctls.h',
 		'include/abi-bits/msg.h',
 		'include/abi-bits/mqueue.h',
+		'include/abi-bits/sem.h',
+		'include/abi-bits/fd_set.h',
+		'include/abi-bits/sig-limits.h',
 
 		subdir: 'abi-bits',
 		follow_symlinks: true
