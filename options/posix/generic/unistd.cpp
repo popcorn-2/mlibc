@@ -516,15 +516,6 @@ int getlogin_r(char *name, size_t name_len) {
 	return 0;
 }
 
-// optarg and optind are provided to us by the GLIBC part of the mlibc.
-
-#if not(__MLIBC_GLIBC_OPTION)
-extern "C" {
-	char *optarg;
-	int optind = 1;
-}
-#endif
-
 int getopt(int argc, char *const argv[], const char *optstring) {
 	return mlibc::getopt_common(argc, argv, optstring, nullptr, nullptr, mlibc::GetoptMode::Short);
 }
