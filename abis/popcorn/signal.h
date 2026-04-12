@@ -52,7 +52,7 @@ typedef void (*__sighandler) (int);
 #define SIGPOLL   SIGIO
 #define SIGPROF   22
 #define SIGSYS    23
-#define SIGCANCEL SIGSYS
+#define SIGCANCEL 31
 #define SIGTRAP   24
 #define SIGURG    25
 #define SIGVTALRM 26
@@ -60,6 +60,8 @@ typedef void (*__sighandler) (int);
 #define SIGXFSZ   28
 #define SIGWINCH  29
 #define SIGPWR    30
+#define SIGRTMIN 35
+#define SIGRTMAX 64
 
 /* siginfo->si_info constants */
 /* SIGBUS */
