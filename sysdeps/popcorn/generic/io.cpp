@@ -5,6 +5,7 @@
 #include <string.h>
 #include <bits/ensure.h>
 #include <mlibc/debug.hpp>
+#include <errno.h>
 
 int mlibc::sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 	mlibc::panicLogger() << "mlibc: `sys_open` is a stub" << frg::endlog;
@@ -44,45 +45,45 @@ int mlibc::sys_open(const char *pathname, int flags, mode_t mode, int *fd) {
 }
 
 int mlibc::sys_read(int fd, void *buf, size_t count, ssize_t *bytes_read) {
-	uint64_t ret_low, ret_high;
-	__syscall_3(
+	__uint128_t ret;
+	syscall3(
 		POPCORN_METHOD_CORE_IO_READ_READ | POPCORN_INTERFACE_CORE_IO_READ,
-		ret_low, ret_high,
 		fd,
 		buf,
 		count,
+		ret,
 		error
 	);
-	if (bytes_read) *bytes_read = ret_low;
+	if (bytes_read) *bytes_read = static_cast<ssize_t>(ret);
 	return 0;
 
 	error:
-	return ret_low;
+	return ret;
 }
 
 int mlibc::sys_write(int fd, const void *buf, size_t count, ssize_t *bytes_written) {
-	uint64_t ret_low, ret_high;
-	__syscall_3(
+	__uint128_t ret;
+	syscall3(
 		POPCORN_METHOD_CORE_IO_WRITE_WRITE | POPCORN_INTERFACE_CORE_IO_WRITE,
-		ret_low, ret_high,
 		fd,
 		buf,
 		count,
+		ret,
 		error
 	);
-	if (bytes_written) *bytes_written = ret_low;
+	if (bytes_written) *bytes_written = static_cast<ssize_t>(ret);
 	return 0;
 
 	error:
-	return ret_low;
+	return ret;
 }
 
 int mlibc::sys_seek(int fd, off_t offset, int whence, off_t *new_offset) {
-	mlibc::panicLogger() << "mlibc: `sys_seek` is a stub" << frg::endlog;
-	mlibc::sys_libc_panic();
+	mlibc::infoLogger() << "mlibc: `sys_seek` is a stub" << frg::endlog;
+	//mlibc::sys_libc_panic();
+	return ESPIPE; // HACKY
 }
 
 int mlibc::sys_close(int fd) {
 	mlibc::panicLogger() << "mlibc: `sys_close` is a stub" << frg::endlog;
-	mlibc::sys_libc_panic();
 }

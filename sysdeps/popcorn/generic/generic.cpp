@@ -7,6 +7,7 @@
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 #include <mlibc/tid.hpp>
+#include <stdio.h>
 
 void mlibc::sys_libc_log(const char *message) {
 	mlibc::sys_write(2, message, strlen(message), nullptr);
@@ -14,11 +15,11 @@ void mlibc::sys_libc_log(const char *message) {
 
 static void sys_yield() {
 	// yield_now@core.proc.Thread://{thread handle}
-	uint64_t ret_low, ret_high;
-	__syscall_1(
+	__uint128_t ret;
+	syscall1(
 		POPCORN_METHOD_CORE_PROC_THREAD_YIELD_NOW | POPCORN_INTERFACE_CORE_PROC_THREAD,
-		ret_low, ret_high,
 		mlibc::this_tid(),
+		ret,
 		error
 	);
 	error:
@@ -41,12 +42,12 @@ void mlibc::sys_yield() {
 
 [[noreturn]] void mlibc::sys_exit(int status) {
 	// exit@core.proc.Thread://{thread handle}
-	uint64_t ret_low, ret_high;
-	__syscall_2(
+	__uint128_t ret;
+	syscall2(
 		POPCORN_METHOD_CORE_PROC_THREAD_EXIT | POPCORN_INTERFACE_CORE_PROC_THREAD,
-		ret_low, ret_high,
 		mlibc::this_tid(),
 		status,
+		ret,
 		error
 	);
 	error:
@@ -60,18 +61,18 @@ int mlibc::sys_tcb_set(void *pointer) {
 
 int mlibc::sys_tcb_set(void *pointer, unsigned int tid) {
 	// set_tcb@core.proc.Thread://{thread handle}
-	uint64_t ret_low, ret_high;
-	__syscall_2(
+	__uint128_t ret;
+	syscall2(
 		POPCORN_METHOD_CORE_PROC_THREAD_SET_TCB | POPCORN_INTERFACE_CORE_PROC_THREAD,
-		ret_low, ret_high,
 		tid,
 		pointer,
+		ret,
 		error
 	);
 	return 0;
 
 	error:
-	return ret_low;
+	return ret;
 }
 
 int mlibc::sys_futex_wait(int *pointer, int expected, const struct timespec *time) {
@@ -79,43 +80,103 @@ int mlibc::sys_futex_wait(int *pointer, int expected, const struct timespec *tim
 	//mlibc::sys_libc_panic();
 	return -1;
 }
-int mlibc::sys_futex_wake(int *pointer) {
+int mlibc::sys_futex_wake(int *pointer, bool all) {
 	mlibc::panicLogger() << "mlibc: `sys_futex_wake` is a stub" << frg::endlog;
 	//mlibc::sys_libc_panic();
 	return -1;
 }
 
+namespace {
+	int size_t_to_str(size_t val, char* buf) {
+		int len = 0;
+
+		// Handle zero explicitly
+		if (val == 0) {
+			buf[len++] = '0';
+			buf[len] = '\0';
+			return len;
+		}
+
+		// Extract digits in reverse order
+		while (val > 0) {
+			buf[len++] = (val % 10) + '0';
+			val /= 10;
+		}
+
+		// Reverse the string in place to fix the order
+		int start = 0;
+		int end = len - 1;
+		while (start < end) {
+			char temp = buf[start];
+			buf[start] = buf[end];
+			buf[end] = temp;
+			start++;
+			end--;
+		}
+
+		return len; // Returns the count of characters
+	}
+}
+
 int mlibc::sys_anon_allocate(size_t size, void **pointer) {
-	// unstable_anon_alloc@core.proc.Proc://{thread handle}
-	uint64_t ret_low, ret_high;
-	__syscall_2(
-		POPCORN_METHOD_CORE_PROC_PROC_UNSTABLE_ANON_ALLOC | POPCORN_INTERFACE_CORE_PROC_PROC,
-		ret_low, ret_high,
-		mlibc::this_tid(),
-		size,
+	static char buf[32] = "mem:z/";
+
+	auto ret = size_t_to_str(size, buf+6);
+
+	// open@core.mem.Pager
+	const static __uint128_t proto[1] = {
+		6
+	};
+
+	__uint128_t ret3;
+	syscall4(
+		((__uint128_t)1 << 96),
+		buf,
+		ret+6,
+		proto,
+		1,
+		ret3,
 		error
 	);
-	if (pointer) *pointer = reinterpret_cast<void*>(ret_low);
-	return 0;
+
+	{
+		// map_vmo@core.proc.Proc://{thread handle}
+		__uint128_t ret2;
+		syscall5(
+			POPCORN_METHOD_CORE_PROC_THREAD_MAP_VMO | POPCORN_INTERFACE_CORE_PROC_PROC,
+			mlibc::this_tid(),
+			static_cast<size_t>(ret3),
+			NULL,
+			size,
+			0,
+			ret2,
+			error2
+		);
+		if (pointer) *pointer = reinterpret_cast<void*>(static_cast<size_t>(ret2));
+		return 0;
+
+		error2:
+		return ret2;
+	}
 
 	error:
-	return ret_low;
+	return ret3;
 }
 
 int mlibc::sys_anon_free(void *pointer, size_t size) {
 	// unstable_anon_dealloc@core.proc.Proc://{thread handle}
-	uint64_t ret_low, ret_high;
-	__syscall_2(
+	/*__uint128_t ret;
+	syscall2(
 		POPCORN_METHOD_CORE_PROC_PROC_UNSTABLE_ANON_DEALLOC | POPCORN_INTERFACE_CORE_PROC_PROC,
-		ret_low, ret_high,
 		mlibc::this_tid(),
 		pointer,
+		ret,
 		error
-	);
+	);*/
 	return 0;
 
-	error:
-	return ret_low;
+	//error:
+	//return ret;
 }
 
 // mlibc assumes that anonymous memory returned by sys_vm_map() is zeroed by the kernel / whatever is behind the sysdeps
