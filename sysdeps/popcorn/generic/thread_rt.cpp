@@ -1,23 +1,23 @@
 #include <mlibc/tcb.hpp>
 #include <mlibc/thread-entry.hpp>
-#include <mlibc/internal-sysdeps.hpp>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 #include <bits/ensure.h>
 
-extern "C" void __mlibc_enter_thread(void *entry, void *user_arg, Tcb *tcb) {
+extern "C" void __mlibc_enter_thread(void *(*fn)(void *), void *arg, Tcb *tcb) {
     // Wait until our parent sets up the TID:
-    while (!__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED))
-        mlibc::sys_futex_wait(&tcb->tid, 0, nullptr);
+    while(__atomic_load_n(&tcb->tid, __ATOMIC_RELAXED) == 0)
+		mlibc::sysdep<FutexWait>(&tcb->tid, 0, nullptr);
 
-    if (mlibc::sys_tcb_set(tcb, tcb->tid))
-        __ensure(!"sys_tcb_set() failed");
+    if(mlibc::sysdep<TcbSet>(tcb))
+		__ensure(!"failed to set tcb for new thread");
 
-    tcb->invokeThreadFunc(entry, user_arg);
+	// Enable cancellation once the TCB is up
+	__atomic_fetch_or(&tcb->cancelBits, tcbCancelEnableBit, __ATOMIC_RELAXED);
 
-    auto self = reinterpret_cast<Tcb *>(tcb);
+	tcb->invokeThreadFunc(reinterpret_cast<void *>(fn), arg);
 
-    __atomic_store_n(&self->didExit, 1, __ATOMIC_RELEASE);
-    mlibc::sys_futex_wake(&self->didExit, true);
+    __atomic_store_n(&tcb->didExit, 1, __ATOMIC_RELEASE);
+    mlibc::sysdep<FutexWake>(&tcb->didExit, true);
 
-    mlibc::sys_thread_exit();
+	mlibc::thread_exit(tcb->returnValue);
 }

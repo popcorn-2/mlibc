@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <bits/ensure.h>
 #include <mlibc/elf/startup.h>
-#include <mlibc/ansi-sysdeps.hpp>
+#include <mlibc/all-sysdeps.hpp>
 
 // defined by the POSIX library
 void __mlibc_initLocale();
@@ -17,5 +17,5 @@ extern "C" void __mlibc_entry(uintptr_t *entry_stack, int (*main_fn)(int argc, c
 
 	auto result = main_fn(mlibc::entry_stack.argc, mlibc::entry_stack.argv);
 	__mlibc_do_finalize();
-	mlibc::sys_exit(result);
+	mlibc::sysdep<Exit>(result);
 }
