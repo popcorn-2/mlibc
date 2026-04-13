@@ -3,6 +3,7 @@
 #include <mlibc/debug.hpp>
 #include <bits/ensure.h>
 #include <mlibc/tid.hpp>
+#include <mlibc/tcb.hpp>
 #include <stdio.h>
 
 namespace mlibc {
@@ -50,7 +51,7 @@ namespace mlibc {
 		__uint128_t ret;
 		syscall2(
 			POPCORN_METHOD_CORE_PROC_THREAD_SET_TCB | POPCORN_INTERFACE_CORE_PROC_THREAD,
-			mlibc::this_tid(),
+			reinterpret_cast<Tcb*>(pointer)->tid,
 			pointer,
 			ret,
 			error

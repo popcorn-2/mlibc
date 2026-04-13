@@ -382,7 +382,11 @@ extern "C" void *interpreterMain(uintptr_t *entry_stack) {
 	// Set up an early TCB such that we can cache our own TID.
 	// The TID is needed to use futexes, so this caching saves a lot of syscalls.
 	earlyTcb.selfPointer = &earlyTcb;
-	earlyTcb.tid = mlibc::this_tid();
+	#ifdef __POPCORN__
+		earlyTcb.tid = 3; // initial TID on popcorn abi is always 3
+	#else
+		earlyTcb.tid = mlibc::this_tid();
+	#endif
 	if(mlibc::sysdep<TcbSet>(&earlyTcb))
 		__ensure(!"sys_tcb_set() failed");
 	mlibc::tcb_available_flag = true;
